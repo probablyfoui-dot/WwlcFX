@@ -26,14 +26,14 @@ jobs:
         run: |
           jpackage `
             --input target/ `
-            --name MyApp `
-            --main-jar myapp.jar `
-            --main-class com.example.Main `
+            --name WwlcFX `
+            --main-jar wwlc-fx-1.0.jar `
+            --main-class com.wwlc.Main `
             --type exe `
             --dest output/
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MyApp-Windows
+          name: WwlcFX-Windows
           path: output/
