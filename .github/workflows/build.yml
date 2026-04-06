@@ -1,4 +1,4 @@
-name: Build Windows EXE
+name: Build Apps
 
 on:
   push:
@@ -8,7 +8,6 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,4 +35,35 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: WwlcFX-Windows
+          path: output/
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build JAR with Maven
+        run: mvn clean package -f pom.xml
+
+      - name: Build DMG with jpackage
+        run: |
+          jpackage \
+            --input target/ \
+            --name WwlcFX \
+            --main-jar wwlc-fx-1.0.jar \
+            --main-class com.wwlc.Main \
+            --type dmg \
+            --dest output/
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WwlcFX-Mac
           path: output/
