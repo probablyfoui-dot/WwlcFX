@@ -1,10 +1,8 @@
 name: Build Apps
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -18,6 +16,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Install JavaFX
+        run: |
+          curl -L https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_windows-x64_bin-sdk.zip -o openjfx.zip
+          Expand-Archive openjfx.zip -DestinationPath .
+
       - name: Build JAR with Maven
         run: mvn clean package -f pom.xml
 
@@ -29,7 +32,14 @@ jobs:
             --main-jar wwlc-fx-1.0.jar `
             --main-class com.wwlc.Main `
             --type exe `
-            --dest output/
+            --dest output/ `
+            --module-path javafx-sdk-21.0.2/lib `
+            --add-modules javafx.controls,javafx.fxml,javafx.media `
+            --java-options "--enable-native-access=javafx.graphics"
+
+      - name: Copy JavaFX native DLLs into app
+        run: |
+          copy javafx-sdk-21.0.2\lib\*.dll "output\WwlcFX\app\" /Y
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
@@ -51,8 +61,8 @@ jobs:
 
       - name: Install JavaFX
         run: |
-          wget https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_osx-x64_bin-sdk.zip
-          unzip openjfx-21.0.2_osx-x64_bin-sdk.zip
+          curl -L https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_osx-x64_bin-sdk.zip -o openjfx.zip
+          unzip openjfx.zip
 
       - name: Build JAR with Maven
         run: mvn clean package -f pom.xml
@@ -67,7 +77,14 @@ jobs:
             --type dmg \
             --dest output/ \
             --module-path javafx-sdk-21.0.2/lib \
-            --add-modules javafx.controls,javafx.fxml,javafx.media
+            --add-modules javafx.controls,javafx.fxml,javafx.media \
+            --java-options "--enable-native-access=javafx.graphics"
+
+      - name: Copy JavaFX native dylibs into app
+        run: |
+          hdiutil attach output/WwlcFX-1.0.dmg
+          sudo cp javafx-sdk-21.0.2/lib/*.dylib "/Volumes/WwlcFX/WwlcFX.app/Contents/runtime/Contents/Home/lib/"
+          hdiutil detach /Volumes/WwlcFX
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
