@@ -39,7 +39,7 @@ jobs:
 
       - name: Copy JavaFX native DLLs into app
         run: |
-          copy javafx-sdk-21.0.2\lib\*.dll "output\WwlcFX\app\" /Y
+          Copy-Item -Path "javafx-sdk-21.0.2\lib\*.dll" -Destination "output\WwlcFX\app\" -Force
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
@@ -67,14 +67,14 @@ jobs:
       - name: Build JAR with Maven
         run: mvn clean package -f pom.xml
 
-      - name: Build DMG with jpackage
+      - name: Build app bundle with jpackage
         run: |
           jpackage \
             --input target/ \
             --name WwlcFX \
             --main-jar wwlc-fx-1.0.jar \
             --main-class com.wwlc.Main \
-            --type dmg \
+            --type app-image \
             --dest output/ \
             --module-path javafx-sdk-21.0.2/lib \
             --add-modules javafx.controls,javafx.fxml,javafx.media \
@@ -82,12 +82,14 @@ jobs:
 
       - name: Copy JavaFX native dylibs into app
         run: |
-          hdiutil attach output/WwlcFX-1.0.dmg
-          sudo cp javafx-sdk-21.0.2/lib/*.dylib "/Volumes/WwlcFX/WwlcFX.app/Contents/runtime/Contents/Home/lib/"
-          hdiutil detach /Volumes/WwlcFX
+          cp javafx-sdk-21.0.2/lib/*.dylib output/WwlcFX.app/Contents/runtime/Contents/Home/lib/
+
+      - name: Package into DMG
+        run: |
+          hdiutil create -volname WwlcFX -srcfolder output/WwlcFX.app -ov -format UDZO output/WwlcFX.dmg
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
         with:
           name: WwlcFX-Mac
-          path: output/
+          path: output/WwlcFX.dmg
